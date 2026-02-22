@@ -4,6 +4,7 @@
     --bg-color: #efdbbf;
     --bg-light: #f1eae0;
     --text-color: #242a2b;
+    --danger-color: #d32f2f;
 }
 
 * {
@@ -48,7 +49,7 @@ body {
 }
 
 .nav-brand {
-    font-size: 1.3rem;
+    font-size: 1.5rem;
     font-weight: 800;
     color: var(--primary-color);
 }
@@ -61,6 +62,23 @@ body {
 
 .nav-brand a:hover {
     color: var(--accent-color);
+}
+
+.nav-help-btn {
+    background: transparent;
+    border: 2px solid var(--accent-color);
+    color: var(--accent-color);
+    font-weight: 700;
+    font-size: 0.9rem;
+    padding: 0.4rem 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    border-radius: 4px;
+}
+
+.nav-help-btn:hover {
+    background-color: var(--accent-color);
+    color: var(--bg-light);
 }
 
 .site-main {
@@ -78,16 +96,56 @@ body {
 }
 
 .kanban-column {
-    min-width: 260px;
-    max-width: 320px;
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: none;
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 1.2rem;
 }
 
 .kanban-column-title {
     font-weight: 700;
-    font-size: 1rem;
+    font-size: 1.35rem;
+    text-align: center;
+    position: relative;
+    padding: 0 1.8rem;
+}
+
+.kanban-column-delete {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1.6rem;
+    height: 1.6rem;
+    border: none;
+    background: transparent;
+    color: rgba(36, 42, 43, 0.55);
+    font-size: 1.8rem;
+    font-weight: 700;
+    line-height: 1;
+    padding: 0;
+    opacity: 0;
+    cursor: pointer;
+    transition: opacity 0.2s ease, color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.kanban-column-title:hover .kanban-column-delete {
+    opacity: 1;
+}
+
+.kanban-column-delete:hover {
+    color: var(--danger-color);
+}
+
+.kanban-column.kanban-column-add {
+    flex: 0 0 10%;
+    max-width: 10%;
+    justify-content: flex-start;
 }
 
 .kanban-item {
@@ -95,6 +153,56 @@ body {
     border: 2px solid var(--accent-color);
     padding: 0.75rem 1rem;
     box-shadow: 4px 4px 0 var(--accent-color);
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.kanban-item-title {
+    font-weight: 700;
+}
+
+.kanban-item-notes {
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+.kanban-item-add {
+    width: 100%;
+    border: 2px dashed var(--accent-color);
+    background: transparent;
+    color: var(--accent-color);
+    font-weight: 700;
+    font-size: 1.2rem;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.kanban-column-add .kanban-column-title {
+    width: 100%;
+    border: none;
+    background: transparent;
+    color: rgba(36, 42, 43, 0.6);
+    font-weight: 700;
+    font-size: 1.35rem;
+    padding: 0.35rem 0.5rem;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.kanban-column-add .kanban-column-title[contenteditable="true"]:empty::before {
+    content: "add column";
+    color: rgba(36, 42, 43, 0.4);
+    pointer-events: none;
+}
+
+.kanban-item-add:hover {
+    background-color: rgba(27, 75, 198, 0.08);
+}
+
+.kanban-column-add .kanban-column-title:hover {
+    color: var(--accent-color);
 }
 
 .site-footer {
@@ -105,4 +213,119 @@ body {
     flex: 0 0 3vh;
     display: flex;
     align-items: center;
+}
+
+.footer-link {
+    color: var(--accent-color);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s ease;
+}
+
+.footer-link:hover {
+    color: var(--primary-color);
+    text-decoration: underline;
+}
+
+.help-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(239, 219, 191, 0.5);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.help-overlay.active {
+    display: flex;
+}
+
+.help-modal {
+    background-color: var(--bg-light);
+    border: 2px solid var(--accent-color);
+    box-shadow: 8px 8px 0 var(--accent-color);
+    width: 90%;
+    height: 90%;
+    max-width: 800px;
+    max-height: 90vh;
+    padding: 2rem;
+    position: relative;
+    overflow-y: auto;
+}
+
+.help-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: transparent;
+    border: none;
+    font-size: 2rem;
+    color: var(--text-color);
+    cursor: pointer;
+    line-height: 1;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease;
+}
+
+.help-close:hover {
+    color: var(--danger-color);
+}
+
+.help-title {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--primary-color);
+    margin-bottom: 1.5rem;
+}
+
+.help-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.help-content section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.help-content h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.help-content p {
+    line-height: 1.6;
+    color: var(--text-color);
+}
+
+.help-content a {
+    color: var(--accent-color);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.help-content a:hover {
+    text-decoration: underline;
+}
+
+.help-content kbd {
+    background-color: var(--bg-color);
+    border: 1px solid var(--accent-color);
+    border-radius: 3px;
+    padding: 0.1rem 0.4rem;
+    font-family: monospace;
+    font-size: 0.9em;
 }

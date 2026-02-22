@@ -3,27 +3,100 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Erik Schütze</title>
+    <title>Bantō</title>
     <link rel="stylesheet" href="css/style.css">
+    <script src="js/app.js" defer></script>
   </head>
   <body>
     <nav class="navbar">
       <div class="nav-brand">
         <a href="/">Bantō</a>
       </div>
+      <button class="nav-help-btn" type="button" aria-label="How to use Banto">How to use Bantō</button>
     </nav>
 
     <main class="site-main">
       <div class="kanban-container">
         <div class="kanban-column">
-          <div class="kanban-column-title">To Do</div>
-          <div class="kanban-item">Example item</div>
+          <div class="kanban-column-title">To Do
+            <button class="kanban-column-delete" type="button" aria-label="Delete column">×</button>
+          </div>
+          <div class="kanban-item">
+            <div class="kanban-item-title" data-key="todo-brief-title" contenteditable="true">Concise item title</div>
+            <p class="kanban-item-notes" data-key="todo-brief-notes" contenteditable="true">Use this text to add a description or notes to remember later</p>
+          </div>
+          <div class="kanban-item">
+            <div class="kanban-item-title" data-key="todo-refs-title" contenteditable="true">Grab a coffee ☕</div>
+            <p class="kanban-item-notes" data-key="todo-refs-notes" contenteditable="true">You deserve it!</p>
+          </div>
+          <button class="kanban-item-add" type="button" aria-label="Add item to To Do">+</button>
+        </div>
+
+        <div class="kanban-column">
+          <div class="kanban-column-title">In Progress
+            <button class="kanban-column-delete" type="button" aria-label="Delete column">×</button>
+          </div>
+          <div class="kanban-item">
+            <div class="kanban-item-title" data-key="progress-layout-title" contenteditable="true">Learn how to use Bantō</div>
+            <p class="kanban-item-notes" data-key="progress-layout-notes" contenteditable="true">Click the help button in the top right to learn more</p>
+          </div>
+          <button class="kanban-item-add" type="button" aria-label="Add item to In Progress">+</button>
+        </div>
+
+        <div class="kanban-column">
+          <div class="kanban-column-title">Done
+            <button class="kanban-column-delete" type="button" aria-label="Delete column">×</button>
+          </div>
+          <button class="kanban-item-add" type="button" aria-label="Add item to Done">+</button>
+        </div>
+
+        <div class="kanban-column kanban-column-add">
+          <button class="kanban-column-title" type="button" aria-label="Add column">add column</button>
         </div>
       </div>
     </main>
 
     <footer class="site-footer">
-      <p>© 2026 Erik Schütze</p>
+      <p>© 2026 Erik Schütze · <a class="footer-link" href="https://erik-schuetze.dev/blog/" target="_blank" rel="noreferrer">Blog</a> · <a class="footer-link" href="https://github.com/Erik-Schuetze/banto" target="_blank" rel="noreferrer">Code</a></p>
     </footer>
+
+    <div class="help-overlay" id="helpOverlay">
+      <div class="help-modal">
+        <button class="help-close" type="button" aria-label="Close help">×</button>
+        <h2 class="help-title">How to use Bantō</h2>
+        <div class="help-content">
+          <section>
+            <h3>Adding Columns</h3>
+            <p>Click the <strong>"add column"</strong> button on the right side of the board. Type your column name and press <kbd>Enter</kbd> to create it.</p>
+          </section>
+
+          <section>
+            <h3>Adding Items</h3>
+            <p>Click the <strong>+</strong> button at the bottom of any column to add a new item. Each item has a title (bold) and a notes section.</p>
+          </section>
+
+          <section>
+            <h3>Editing</h3>
+            <p>Click on any item title or notes to edit them. Press <kbd>Enter</kbd> to save, or <kbd>Shift + Enter</kbd> to add a new line within the text.</p>
+          </section>
+
+          <section>
+            <h3>Deleting Columns</h3>
+            <p>Hover over a column title to reveal the × button. Click it to delete the column. <strong>Warning:</strong> This will delete all items in that column!</p>
+          </section>
+
+          <section>
+            <h3>Data Persistence</h3>
+            <p>Your board is automatically saved in your browser's local storage. Your data stays on your device and persists between sessions.</p>
+          </section>
+
+          <section>
+            <h3>Learn More</h3>
+            <p>Read the full article about Bantō: <a href="https://erik-schuetze.dev/blog/banto/" target="_blank" rel="noreferrer">Building a Simple Kanban Board</a></p>
+          </section>
+        </div>
+      </div>
+    </div>
   </body>
 </html>
+
