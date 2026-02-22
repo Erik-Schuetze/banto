@@ -24,23 +24,28 @@ body {
     background-size: 27px 27px;
     background-position: center center;
     min-height: 100vh;
+    height: 100vh;
     display: flex;
     flex-direction: column;
+    padding-top: 5vh;
+    padding-bottom: 3vh;
 }
 
 .navbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem 2rem;
+    padding: 0 2rem;
     background: linear-gradient(
         to bottom,
         var(--bg-color) 40%,
         rgba(239, 219, 191, 0.5) 80%,
         rgba(239, 219, 191, 0)
     );
-    position: sticky;
+    position: fixed;
     top: 0;
+    left: 0;
+    right: 0;
     z-index: 1000;
     backdrop-filter: blur(3px);
     -webkit-backdrop-filter: blur(3px);
@@ -82,17 +87,23 @@ body {
 }
 
 .site-main {
-    flex: 0 0 92vh;
+    flex: 1 1 auto;
     display: flex;
+    min-height: 0;
+    overflow: hidden;
+    margin-top: 5vh;
+    margin-bottom: 3vh;
 }
 
 .kanban-container {
-    margin: 0 4rem;
+    margin: 0;
     min-height: 40vh;
     display: flex;
     gap: 2rem;
-    padding: 1rem 0 2rem;
+    padding: 1rem 4rem 2rem;
     flex: 1;
+    overflow-x: auto;
+    width: 100%;
 }
 
 .kanban-column {
@@ -206,13 +217,26 @@ body {
 }
 
 .site-footer {
-    padding: 1rem 4rem 2rem;
+    padding: 0 4rem;
     color: var(--text-color);
     font-size: 0.95rem;
     height: 3vh;
     flex: 0 0 3vh;
     display: flex;
     align-items: center;
+    background: linear-gradient(
+        to top,
+        var(--bg-color) 40%,
+        rgba(239, 219, 191, 0.5) 80%,
+        rgba(239, 219, 191, 0)
+    );
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
 }
 
 .footer-link {
