@@ -1,0 +1,11 @@
+version: '3'
+services:
+  caddy:
+    build:
+      context: .
+      args:
+        CADDYFILE: Caddyfile.dev
+    ports:
+      - "8090:80"
+    volumes:
+      - ./site:/usr/share/caddy

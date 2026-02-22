@@ -1,0 +1,5 @@
+banto.erik-schuetze.dev, www.banto.erik-schuetze.dev {
+    # Serve over HTTPS (Caddy automatically handles this)
+    root * /usr/share/caddy
+    file_server
+}

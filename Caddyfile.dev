@@ -1,0 +1,10 @@
+:80 {
+    @indexhtml {
+        path_regexp index ^(.*/)?index\.html$
+    }
+
+    redir @indexhtml {re.index.1} 301
+
+    root * /usr/share/caddy
+    file_server
+}
