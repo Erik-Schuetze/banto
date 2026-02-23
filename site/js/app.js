@@ -107,7 +107,8 @@ const saveBoard = (container) => {
         title: titleEl ? titleEl.innerText : "",
         notes: notesEl ? notesEl.innerText : "",
         titleKey: titleEl ? titleEl.dataset.key : "",
-        notesKey: notesEl ? notesEl.dataset.key : ""
+        notesKey: notesEl ? notesEl.dataset.key : "",
+        completed: !!item.querySelector(".kanban-item-complete.completed")
       });
     });
 
@@ -222,7 +223,18 @@ const createItemElement = (itemData = {}) => {
   deleteBtn.textContent = "×";
   deleteBtn.setAttribute("aria-label", "Delete item");
 
-  header.append(title, deleteBtn);
+  const completeBtn = document.createElement("button");
+  completeBtn.className = "kanban-item-complete";
+  completeBtn.type = "button";
+  completeBtn.textContent = "✔";
+  completeBtn.setAttribute("aria-label", "Toggle complete");
+
+  if (itemData.completed) {
+    completeBtn.classList.add("completed");
+    title.classList.add("completed");
+  }
+
+  header.append(title, completeBtn, deleteBtn);
 
   const notes = createElement("p", "kanban-item-notes", itemData.notes || "Description");
   notes.dataset.key = itemData.notesKey || generateKey("notes");
@@ -414,7 +426,8 @@ document.addEventListener("DOMContentLoaded", () => {
             title: titleEl ? titleEl.innerText : "",
             notes: notesEl ? notesEl.innerText : "",
             titleKey: titleEl ? titleEl.dataset.key : "",
-            notesKey: notesEl ? notesEl.dataset.key : ""
+            notesKey: notesEl ? notesEl.dataset.key : "",
+            completed: !!item.querySelector(".kanban-item-complete.completed")
           });
         });
         return { title, items };
@@ -493,6 +506,18 @@ document.addEventListener("DOMContentLoaded", () => {
       const item = deleteItemButton.closest(".kanban-item");
       if (item) {
         item.remove();
+        saveBoard(container);
+      }
+      return;
+    }
+
+    const completeButton = event.target.closest(".kanban-item-complete");
+    if (completeButton) {
+      const item = completeButton.closest(".kanban-item");
+      if (item) {
+        const titleEl = item.querySelector(".kanban-item-title");
+        completeButton.classList.toggle("completed");
+        titleEl.classList.toggle("completed");
         saveBoard(container);
       }
       return;

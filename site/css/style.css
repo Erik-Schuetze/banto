@@ -256,6 +256,44 @@ body {
     cursor: text;
 }
 
+.kanban-item-complete {
+    position: relative;
+    width: 1.2rem;
+    height: 1.2rem;
+    border: none;
+    background: transparent;
+    color: rgba(36, 42, 43, 0.55);
+    font-size: 1.1rem;
+    font-weight: 700;
+    line-height: 1;
+    padding: 0;
+    opacity: 0;
+    cursor: pointer;
+    transition: opacity 0.2s ease, color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.kanban-item:hover .kanban-item-complete {
+    opacity: 1;
+}
+
+.kanban-item-complete:hover {
+    color: #2e7d32;
+}
+
+.kanban-item-complete.completed {
+    opacity: 1;
+    color: #2e7d32;
+}
+
+.kanban-item-title.completed {
+    text-decoration: line-through;
+    opacity: 0.55;
+}
+
 .kanban-item-delete {
     position: relative;
     width: 1.2rem;
