@@ -400,6 +400,29 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll("[data-key]").forEach(ensureEditable);
   }
 
+  // Capture the initial board state as the baseline for undo history
+  if (boardHistory.history.length === 0) {
+    const initialState = JSON.stringify(
+      Array.from(container.querySelectorAll(".kanban-column:not(.kanban-column-add)")).map((column) => {
+        const titleElement = column.querySelector(".kanban-column-title-text");
+        const title = titleElement ? titleElement.innerText.trim() : "";
+        const items = [];
+        column.querySelectorAll(".kanban-item").forEach((item) => {
+          const titleEl = item.querySelector(".kanban-item-title");
+          const notesEl = item.querySelector(".kanban-item-notes");
+          items.push({
+            title: titleEl ? titleEl.innerText : "",
+            notes: notesEl ? notesEl.innerText : "",
+            titleKey: titleEl ? titleEl.dataset.key : "",
+            notesKey: notesEl ? notesEl.dataset.key : ""
+          });
+        });
+        return { title, items };
+      })
+    );
+    boardHistory.saveState(initialState);
+  }
+
   // Column dragging functionality
   let draggedColumn = null;
   let lastTargetColumn = null;
