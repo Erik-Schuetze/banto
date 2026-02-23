@@ -95,8 +95,8 @@ const saveBoard = (container) => {
   const columns = [];
 
   container.querySelectorAll(".kanban-column:not(.kanban-column-add)").forEach((column) => {
-    const titleElement = column.querySelector(".kanban-column-title");
-    const title = titleElement ? titleElement.firstChild.textContent.trim() : "";
+    const titleElement = column.querySelector(".kanban-column-title-text");
+    const title = titleElement ? titleElement.innerText.trim() : "";
 
     const items = [];
     column.querySelectorAll(".kanban-item").forEach((item) => {
@@ -208,6 +208,7 @@ const restoreBoardState = (container, boardStateJson) => {
 const createItemElement = (itemData = {}) => {
   const item = document.createElement("div");
   item.className = "kanban-item";
+  item.setAttribute("draggable", "true");
 
   const header = document.createElement("div");
   header.className = "kanban-item-header";
@@ -246,10 +247,20 @@ const createColumnElement = (titleText, items = []) => {
   const column = document.createElement("div");
   column.className = "kanban-column";
 
-  const title = document.createElement("div");
-  title.className = "kanban-column-title";
-  title.textContent = titleText;
-  title.append(createDeleteButton());
+  const titleDiv = document.createElement("div");
+  titleDiv.className = "kanban-column-title";
+  titleDiv.setAttribute("draggable", "true");
+
+  const titleSpan = document.createElement("span");
+  titleSpan.className = "kanban-column-title-text";
+  titleSpan.setAttribute("contenteditable", "true");
+  titleSpan.setAttribute("draggable", "false");
+  titleSpan.textContent = titleText;
+  titleSpan.dataset.key = generateKey("column-title");
+
+  const deleteBtn = createDeleteButton();
+
+  titleDiv.append(titleSpan, deleteBtn);
 
   const addButton = document.createElement("button");
   addButton.className = "kanban-item-add";
@@ -257,7 +268,7 @@ const createColumnElement = (titleText, items = []) => {
   addButton.textContent = "+";
   addButton.setAttribute("aria-label", `Add item to ${titleText}`);
 
-  column.append(title);
+  column.append(titleDiv);
 
   items.forEach((itemData) => {
     const item = createItemElement(itemData);
@@ -265,6 +276,13 @@ const createColumnElement = (titleText, items = []) => {
   });
 
   column.append(addButton);
+
+  // Make title editable like item titles
+  ensureEditable(titleSpan);
+
+  // Setup column drag - will be called by the event setup below
+  titleDiv.dataset.setupColumnDrag = "true";
+
   return column;
 };
 
@@ -319,6 +337,11 @@ const setupAddColumn = (container) => {
     if (titleText) {
       const column = createColumnElement(titleText);
       container.insertBefore(column, addColumnColumn);
+      // Setup drag on the new column title
+      const titleDiv = column.querySelector(".kanban-column-title");
+      if (titleDiv && setupColumnTitleDrag) {
+        setupColumnTitleDrag(titleDiv);
+      }
       saveBoard(container);
     }
 
@@ -368,6 +391,58 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll("[data-key]").forEach(ensureEditable);
   }
 
+  // Column dragging functionality
+  let draggedColumn = null;
+  let lastTargetColumn = null;
+  let lastDropPosition = null;
+
+  const cleanupColumnDrag = () => {
+    if (draggedColumn) {
+      draggedColumn.classList.remove("dragging");
+      const columnTitle = draggedColumn.querySelector(".kanban-column-title");
+      if (columnTitle) {
+        columnTitle.classList.remove("dragging");
+      }
+    }
+    draggedColumn = null;
+    lastTargetColumn = null;
+    lastDropPosition = null;
+    container.querySelectorAll(".kanban-column").forEach(col => {
+      col.classList.remove("drop-left", "drop-right");
+    });
+  };
+
+  // Create a function to setup drag on newly created columns
+  const setupColumnTitleDrag = (titleDiv) => {
+    if (titleDiv.dataset.dragSetup === "true") {
+      return; // Already setup
+    }
+    titleDiv.dataset.dragSetup = "true";
+
+    titleDiv.addEventListener("dragstart", (event) => {
+      // Make sure we're not dragging from the delete button
+      if (event.target.closest(".kanban-column-delete")) {
+        event.preventDefault();
+        return;
+      }
+
+      draggedColumn = titleDiv.closest(".kanban-column");
+      draggedColumn.classList.add("dragging");
+      titleDiv.classList.add("dragging");
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", "column-drag");
+    });
+
+    titleDiv.addEventListener("dragend", (event) => {
+      cleanupColumnDrag();
+    });
+  };
+
+  // Setup drag for all existing column titles
+  container.querySelectorAll(".kanban-column-title:not(.kanban-column-add .kanban-column-title)").forEach(titleDiv => {
+    setupColumnTitleDrag(titleDiv);
+  });
+
   setupAddColumn(container);
 
   container.addEventListener("click", (event) => {
@@ -413,6 +488,10 @@ document.addEventListener("DOMContentLoaded", () => {
       const previousState = boardHistory.undo();
       if (previousState) {
         restoreBoardState(container, previousState);
+        // Setup drag handlers on restored columns
+        container.querySelectorAll(".kanban-column-title:not(.kanban-column-add .kanban-column-title)").forEach(titleDiv => {
+          setupColumnTitleDrag(titleDiv);
+        });
       }
     });
 
@@ -420,6 +499,10 @@ document.addEventListener("DOMContentLoaded", () => {
       const nextState = boardHistory.redo();
       if (nextState) {
         restoreBoardState(container, nextState);
+        // Setup drag handlers on restored columns
+        container.querySelectorAll(".kanban-column-title:not(.kanban-column-add .kanban-column-title)").forEach(titleDiv => {
+          setupColumnTitleDrag(titleDiv);
+        });
       }
     });
 
@@ -453,4 +536,258 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
+
+  // Drag and drop functionality
+  let draggedItem = null;
+
+  const setupDragAndDrop = (container) => {
+    // Handle drag start
+    container.addEventListener("dragstart", (event) => {
+      // Don't handle if this is a column title drag (titleDiv has draggable="true")
+      const columnTitle = event.target.closest(".kanban-column-title");
+      if (columnTitle) {
+        return;
+      }
+
+      const item = event.target.closest(".kanban-item");
+      if (!item || item.classList.contains("kanban-item-add")) {
+        return;
+      }
+
+      draggedItem = item;
+      item.classList.add("dragging");
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/html", item.innerHTML);
+    });
+
+    // Handle drag end
+    container.addEventListener("dragend", (event) => {
+      // Don't handle if this is a column title drag
+      if (event.target.closest(".kanban-column-title")) {
+        return;
+      }
+
+      const item = event.target.closest(".kanban-item");
+      if (item) {
+        item.classList.remove("dragging");
+      }
+      draggedItem = null;
+
+      // Remove all drop indicators
+      document.querySelectorAll(".kanban-drop-indicator").forEach(ind => ind.remove());
+    });
+
+    // Handle drag over (allow drop)
+    container.addEventListener("dragover", (event) => {
+      if (!draggedItem) {
+        return;
+      }
+
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+
+      const column = event.target.closest(".kanban-column");
+      if (!column || column.classList.contains("kanban-column-add")) {
+        return;
+      }
+
+      // Remove existing indicator
+      document.querySelectorAll(".kanban-drop-indicator").forEach(ind => ind.remove());
+
+      const items = Array.from(column.querySelectorAll(".kanban-item"));
+      const addButton = column.querySelector(".kanban-item-add");
+
+      // Find insertion point based on cursor position
+      let insertBefore = null;
+      for (const item of items) {
+        if (item === draggedItem) continue;
+
+        const rect = item.getBoundingClientRect();
+        const midpoint = rect.top + rect.height / 2;
+
+        if (event.clientY < midpoint) {
+          insertBefore = item;
+          break;
+        }
+      }
+
+      // Create and insert drop indicator
+      const dropIndicator = document.createElement("div");
+      dropIndicator.className = "kanban-drop-indicator";
+
+      if (insertBefore) {
+        column.insertBefore(dropIndicator, insertBefore);
+      } else if (addButton) {
+        column.insertBefore(dropIndicator, addButton);
+      } else {
+        column.appendChild(dropIndicator);
+      }
+    });
+
+    // Handle drop
+    container.addEventListener("drop", (event) => {
+      if (!draggedItem) {
+        return;
+      }
+
+      event.preventDefault();
+
+      const targetColumn = event.target.closest(".kanban-column");
+      if (!targetColumn || targetColumn.classList.contains("kanban-column-add")) {
+        return;
+      }
+
+      // Remove drop indicator
+      document.querySelectorAll(".kanban-drop-indicator").forEach(ind => ind.remove());
+
+      // Get target position
+      const items = Array.from(targetColumn.querySelectorAll(".kanban-item"));
+      const addButton = targetColumn.querySelector(".kanban-item-add");
+      let insertBefore = null;
+
+      for (const item of items) {
+        if (item === draggedItem) continue;
+
+        const rect = item.getBoundingClientRect();
+        const midpoint = rect.top + rect.height / 2;
+
+        if (event.clientY < midpoint) {
+          insertBefore = item;
+          break;
+        }
+      }
+
+      // Only move if it's a different position
+      const currentColumn = draggedItem.closest(".kanban-column");
+      const targetIndex = insertBefore
+        ? Array.from(targetColumn.querySelectorAll(".kanban-item")).indexOf(insertBefore)
+        : targetColumn.querySelectorAll(".kanban-item").length;
+
+      const currentIndex = Array.from(currentColumn.querySelectorAll(".kanban-item")).indexOf(draggedItem);
+      const isSameColumn = currentColumn === targetColumn;
+      const isSamePosition = isSameColumn && currentIndex === targetIndex;
+
+      if (!isSamePosition) {
+        // Move the item
+        if (insertBefore) {
+          targetColumn.insertBefore(draggedItem, insertBefore);
+        } else if (addButton) {
+          targetColumn.insertBefore(draggedItem, addButton);
+        } else {
+          targetColumn.appendChild(draggedItem);
+        }
+
+        // Save to history and board
+        saveBoard(container);
+      }
+
+      draggedItem.classList.remove("dragging");
+      draggedItem = null;
+    });
+
+    // Drag leave to clean up indicators
+    container.addEventListener("dragleave", (event) => {
+      if (!event.target.closest(".kanban-item")) {
+        document.querySelectorAll(".kanban-drop-indicator").forEach(ind => ind.remove());
+      }
+    });
+  };
+
+
+  // Column drag and drop handlers for hover effects and drop operations
+  const setupColumnDragAndDrop = (container) => {
+
+    // Handle drag over columns
+    container.addEventListener("dragover", (event) => {
+      if (!draggedColumn) {
+        return;
+      }
+
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+
+      const targetColumn = event.target.closest(".kanban-column");
+      if (!targetColumn || targetColumn.classList.contains("kanban-column-add") || draggedColumn === targetColumn) {
+        // Clear indicators when not over a valid target
+        if (lastTargetColumn) {
+          lastTargetColumn.classList.remove("drop-left", "drop-right");
+          lastTargetColumn = null;
+          lastDropPosition = null;
+        }
+        return;
+      }
+
+      // Determine drop position based on cursor location
+      const rect = targetColumn.getBoundingClientRect();
+      const isDropLeft = event.clientX < rect.left + rect.width / 2;
+      const dropPosition = isDropLeft ? 'left' : 'right';
+
+      // Only update indicator if target or position has changed (prevents jitter)
+      if (targetColumn === lastTargetColumn && dropPosition === lastDropPosition) {
+        return;
+      }
+
+      // Clear previous indicator
+      if (lastTargetColumn) {
+        lastTargetColumn.classList.remove("drop-left", "drop-right");
+      }
+
+      lastTargetColumn = targetColumn;
+      lastDropPosition = dropPosition;
+
+      // Apply CSS class to show indicator via pseudo-element
+      targetColumn.classList.add(isDropLeft ? "drop-left" : "drop-right");
+
+      event.stopPropagation();
+    }, true); // Use CAPTURE phase
+
+    // Handle column drop
+    container.addEventListener("drop", (event) => {
+      if (!draggedColumn) {
+        return;
+      }
+
+      event.preventDefault();
+
+      const targetColumn = event.target.closest(".kanban-column");
+      if (!targetColumn || targetColumn.classList.contains("kanban-column-add") || draggedColumn === targetColumn) {
+        cleanupColumnDrag();
+        event.stopPropagation();
+        return;
+      }
+
+      // Determine drop position based on cursor location
+      const rect = targetColumn.getBoundingClientRect();
+      const isDropLeft = event.clientX < rect.left + rect.width / 2;
+
+      // Move the column before or after target
+      if (isDropLeft) {
+        targetColumn.parentNode.insertBefore(draggedColumn, targetColumn);
+      } else {
+        targetColumn.parentNode.insertBefore(draggedColumn, targetColumn.nextSibling);
+      }
+
+      // Save to history and board
+      saveBoard(container);
+
+      cleanupColumnDrag();
+      event.stopPropagation();
+    }, true); // Use CAPTURE phase
+
+    // Drag leave cleanup
+    container.addEventListener("dragleave", (event) => {
+      if (!draggedColumn) return;
+      // Only clean up when leaving the container entirely
+      if (!container.contains(event.relatedTarget)) {
+        container.querySelectorAll(".kanban-column").forEach(col => {
+          col.classList.remove("drop-left", "drop-right");
+        });
+        lastTargetColumn = null;
+        lastDropPosition = null;
+      }
+    });
+  };
+
+  setupDragAndDrop(container);
+  setupColumnDragAndDrop(container);
 });

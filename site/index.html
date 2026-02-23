@@ -22,25 +22,35 @@
     <main class="site-main">
       <div class="kanban-container">
         <div class="kanban-column">
-          <div class="kanban-column-title">To Do
+          <div class="kanban-column-title" draggable="true">
+            <span class="kanban-column-title-text" contenteditable="true" data-key="column-todo-title" draggable="false">To Do</span>
             <button class="kanban-column-delete" type="button" aria-label="Delete column">×</button>
           </div>
-          <div class="kanban-item">
-            <div class="kanban-item-title" data-key="todo-brief-title" contenteditable="true">Concise item title</div>
+          <div class="kanban-item" draggable="true">
+            <div class="kanban-item-handle"></div>
+            <div class="kanban-item-header">
+              <div class="kanban-item-title" data-key="todo-brief-title" contenteditable="true">Concise item title</div>
+              <button class="kanban-item-delete" type="button" aria-label="Delete item">×</button>
+            </div>
             <p class="kanban-item-notes" data-key="todo-brief-notes" contenteditable="true">Use this text to add a description or notes to remember later</p>
           </div>
-          <div class="kanban-item">
-            <div class="kanban-item-title" data-key="todo-refs-title" contenteditable="true">Grab a coffee ☕</div>
+          <div class="kanban-item" draggable="true">
+            <div class="kanban-item-handle"></div>
+            <div class="kanban-item-header">
+              <div class="kanban-item-title" data-key="todo-refs-title" contenteditable="true">Grab a coffee ☕</div>
+              <button class="kanban-item-delete" type="button" aria-label="Delete item">×</button>
+            </div>
             <p class="kanban-item-notes" data-key="todo-refs-notes" contenteditable="true">You deserve it!</p>
           </div>
           <button class="kanban-item-add" type="button" aria-label="Add item to To Do">+</button>
         </div>
 
         <div class="kanban-column">
-          <div class="kanban-column-title">In Progress
+          <div class="kanban-column-title" draggable="true">
+            <span class="kanban-column-title-text" contenteditable="true" data-key="column-inprogress-title" draggable="false">In Progress</span>
             <button class="kanban-column-delete" type="button" aria-label="Delete column">×</button>
           </div>
-          <div class="kanban-item">
+          <div class="kanban-item" draggable="true">
             <div class="kanban-item-header">
               <div class="kanban-item-title" data-key="progress-layout-title" contenteditable="true">Learn how to use Bantō</div>
               <button class="kanban-item-delete" type="button" aria-label="Delete item">×</button>
@@ -51,7 +61,8 @@
         </div>
 
         <div class="kanban-column">
-          <div class="kanban-column-title">Done
+          <div class="kanban-column-title" draggable="true">
+            <span class="kanban-column-title-text" contenteditable="true" data-key="column-done-title" draggable="false">Done</span>
             <button class="kanban-column-delete" type="button" aria-label="Delete column">×</button>
           </div>
           <button class="kanban-item-add" type="button" aria-label="Add item to Done">+</button>
