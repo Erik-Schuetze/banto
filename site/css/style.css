@@ -65,6 +65,43 @@ body {
     color: var(--accent-color);
 }
 
+.nav-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.nav-undo-btn,
+.nav-redo-btn {
+    width: 2.2rem;
+    height: 2.2rem;
+    background: transparent;
+    border: 2px solid var(--accent-color);
+    color: var(--accent-color);
+    font-weight: 700;
+    font-size: 1.2rem;
+    padding: 0;
+    cursor: pointer;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.nav-undo-btn:hover,
+.nav-redo-btn:hover {
+    background-color: var(--accent-color);
+    color: var(--bg-light);
+}
+
+.nav-undo-btn:disabled,
+.nav-redo-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
 .nav-help-btn {
     background: transparent;
     border: 2px solid var(--accent-color);
@@ -164,8 +201,44 @@ body {
     gap: 0.35rem;
 }
 
+.kanban-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
 .kanban-item-title {
     font-weight: 700;
+    flex: 1;
+}
+
+.kanban-item-delete {
+    position: relative;
+    width: 1.2rem;
+    height: 1.2rem;
+    border: none;
+    background: transparent;
+    color: rgba(36, 42, 43, 0.55);
+    font-size: 1.2rem;
+    font-weight: 700;
+    line-height: 1;
+    padding: 0;
+    opacity: 0;
+    cursor: pointer;
+    transition: opacity 0.2s ease, color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.kanban-item:hover .kanban-item-delete {
+    opacity: 1;
+}
+
+.kanban-item-delete:hover {
+    color: var(--danger-color);
 }
 
 .kanban-item-notes {

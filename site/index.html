@@ -12,7 +12,11 @@
       <div class="nav-brand">
         <a href="/">Bantō</a>
       </div>
-      <button class="nav-help-btn" type="button" aria-label="How to use Banto">How to use Bantō</button>
+      <div class="nav-actions">
+        <button class="nav-undo-btn" type="button" aria-label="Undo">‹</button>
+        <button class="nav-redo-btn" type="button" aria-label="Redo">›</button>
+        <button class="nav-help-btn" type="button" aria-label="How to use Banto">How to use Bantō</button>
+      </div>
     </nav>
 
     <main class="site-main">
@@ -37,7 +41,10 @@
             <button class="kanban-column-delete" type="button" aria-label="Delete column">×</button>
           </div>
           <div class="kanban-item">
-            <div class="kanban-item-title" data-key="progress-layout-title" contenteditable="true">Learn how to use Bantō</div>
+            <div class="kanban-item-header">
+              <div class="kanban-item-title" data-key="progress-layout-title" contenteditable="true">Learn how to use Bantō</div>
+              <button class="kanban-item-delete" type="button" aria-label="Delete item">×</button>
+            </div>
             <p class="kanban-item-notes" data-key="progress-layout-notes" contenteditable="true">Click the help button in the top right to learn more</p>
           </div>
           <button class="kanban-item-add" type="button" aria-label="Add item to In Progress">+</button>

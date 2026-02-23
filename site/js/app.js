@@ -1,6 +1,93 @@
 const STORAGE_PREFIX = "banto:kanban:";
 const STORAGE_BOARD_KEY = "banto:board";
+const STORAGE_HISTORY_KEY = "banto:history";
 const ADD_COLUMN_LABEL = "add column";
+
+// History management
+class BoardHistory {
+  constructor() {
+    this.history = [];
+    this.currentIndex = -1;
+    this.loadHistory();
+  }
+
+  saveState(boardState) {
+    // Remove any future states if we're not at the end
+    this.history = this.history.slice(0, this.currentIndex + 1);
+    // Add new state
+    this.history.push(boardState);
+    this.currentIndex++;
+    this.persistHistory();
+    this.updateUndoRedoButtons();
+  }
+
+  undo() {
+    if (this.canUndo()) {
+      this.currentIndex--;
+      this.persistHistory();
+      return this.history[this.currentIndex];
+    }
+    return null;
+  }
+
+  redo() {
+    if (this.canRedo()) {
+      this.currentIndex++;
+      this.persistHistory();
+      return this.history[this.currentIndex];
+    }
+    return null;
+  }
+
+  canUndo() {
+    return this.currentIndex > 0;
+  }
+
+  canRedo() {
+    return this.currentIndex < this.history.length - 1;
+  }
+
+  loadHistory() {
+    const stored = localStorage.getItem(STORAGE_HISTORY_KEY);
+    if (stored) {
+      try {
+        const data = JSON.parse(stored);
+        this.history = data.history || [];
+        this.currentIndex = data.currentIndex ?? -1;
+      } catch (e) {
+        console.error("Failed to load history:", e);
+      }
+    }
+  }
+
+  persistHistory() {
+    localStorage.setItem(STORAGE_HISTORY_KEY, JSON.stringify({
+      history: this.history,
+      currentIndex: this.currentIndex
+    }));
+  }
+
+  updateUndoRedoButtons() {
+    const undoBtn = document.querySelector(".nav-undo-btn");
+    const redoBtn = document.querySelector(".nav-redo-btn");
+
+    if (undoBtn) {
+      undoBtn.disabled = !this.canUndo();
+    }
+    if (redoBtn) {
+      redoBtn.disabled = !this.canRedo();
+    }
+  }
+
+  clear() {
+    this.history = [];
+    this.currentIndex = -1;
+    this.persistHistory();
+    this.updateUndoRedoButtons();
+  }
+}
+
+let boardHistory = new BoardHistory();
 
 const normalizeText = (value) => value.replace(/\r\n/g, "\n").trim();
 
@@ -27,7 +114,9 @@ const saveBoard = (container) => {
     columns.push({ title, items });
   });
 
-  localStorage.setItem(STORAGE_BOARD_KEY, JSON.stringify(columns));
+  const boardState = JSON.stringify(columns);
+  localStorage.setItem(STORAGE_BOARD_KEY, boardState);
+  boardHistory.saveState(boardState);
 };
 
 const applyStoredValue = (element) => {
@@ -97,12 +186,42 @@ const generateKey = (suffix) => {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${suffix}`;
 };
 
+const restoreBoardState = (container, boardStateJson) => {
+  try {
+    const columns = JSON.parse(boardStateJson);
+    const addColumnColumn = container.querySelector(".kanban-column-add");
+
+    container.querySelectorAll(".kanban-column:not(.kanban-column-add)").forEach(col => col.remove());
+
+    columns.forEach((columnData) => {
+      const column = createColumnElement(columnData.title, columnData.items);
+      container.insertBefore(column, addColumnColumn);
+    });
+
+    localStorage.setItem(STORAGE_BOARD_KEY, boardStateJson);
+    boardHistory.updateUndoRedoButtons();
+  } catch (e) {
+    console.error("Failed to restore board state:", e);
+  }
+};
+
 const createItemElement = (itemData = {}) => {
   const item = document.createElement("div");
   item.className = "kanban-item";
 
+  const header = document.createElement("div");
+  header.className = "kanban-item-header";
+
   const title = createElement("div", "kanban-item-title", itemData.title || "Title");
   title.dataset.key = itemData.titleKey || generateKey("title");
+
+  const deleteBtn = document.createElement("button");
+  deleteBtn.className = "kanban-item-delete";
+  deleteBtn.type = "button";
+  deleteBtn.textContent = "×";
+  deleteBtn.setAttribute("aria-label", "Delete item");
+
+  header.append(title, deleteBtn);
 
   const notes = createElement("p", "kanban-item-notes", itemData.notes || "Description");
   notes.dataset.key = itemData.notesKey || generateKey("notes");
@@ -110,7 +229,7 @@ const createItemElement = (itemData = {}) => {
   ensureEditable(title);
   ensureEditable(notes);
 
-  item.append(title, notes);
+  item.append(header, notes);
   return item;
 };
 
@@ -262,6 +381,16 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    const deleteItemButton = event.target.closest(".kanban-item-delete");
+    if (deleteItemButton) {
+      const item = deleteItemButton.closest(".kanban-item");
+      if (item) {
+        item.remove();
+        saveBoard(container);
+      }
+      return;
+    }
+
     const addItemButton = event.target.closest(".kanban-item-add");
     if (addItemButton) {
       const column = addItemButton.closest(".kanban-column");
@@ -274,6 +403,29 @@ document.addEventListener("DOMContentLoaded", () => {
       saveBoard(container);
     }
   });
+
+  // Undo/Redo functionality
+  const undoBtn = document.querySelector(".nav-undo-btn");
+  const redoBtn = document.querySelector(".nav-redo-btn");
+
+  if (undoBtn && redoBtn) {
+    undoBtn.addEventListener("click", () => {
+      const previousState = boardHistory.undo();
+      if (previousState) {
+        restoreBoardState(container, previousState);
+      }
+    });
+
+    redoBtn.addEventListener("click", () => {
+      const nextState = boardHistory.redo();
+      if (nextState) {
+        restoreBoardState(container, nextState);
+      }
+    });
+
+    // Update button states on load
+    boardHistory.updateUndoRedoButtons();
+  }
 
   // Help modal functionality
   const helpBtn = document.querySelector(".nav-help-btn");
