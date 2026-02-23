@@ -847,4 +847,303 @@ document.addEventListener("DOMContentLoaded", () => {
 
   setupDragAndDrop(container);
   setupColumnDragAndDrop(container);
+
+  // Touch drag & drop (mobile)
+  if ("ontouchstart" in window) {
+    const LONG_PRESS_MS = 200;
+    const MOVE_THRESHOLD = 5;
+
+    const setupTouchItemDrag = (container) => {
+      let touchItem = null;
+      let clone = null;
+      let longPressTimer = null;
+      let isDragging = false;
+      let startX = 0;
+      let startY = 0;
+      let offsetX = 0;
+      let offsetY = 0;
+
+      const cleanup = () => {
+        clearTimeout(longPressTimer);
+        if (clone) {
+          clone.remove();
+          clone = null;
+        }
+        if (touchItem) {
+          touchItem.classList.remove("dragging");
+        }
+        touchItem = null;
+        isDragging = false;
+        document.querySelectorAll(".kanban-drop-indicator").forEach(ind => ind.remove());
+      };
+
+      container.addEventListener("touchstart", (e) => {
+        const item = e.target.closest(".kanban-item");
+        if (!item) return;
+
+        // Don't drag from buttons or editable content
+        if (e.target.closest(".kanban-item-delete") ||
+            e.target.closest(".kanban-item-complete") ||
+            e.target.closest("[contenteditable='true']")) {
+          return;
+        }
+
+        const touch = e.touches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+
+        const rect = item.getBoundingClientRect();
+        offsetX = touch.clientX - rect.left;
+        offsetY = touch.clientY - rect.top;
+
+        touchItem = item;
+
+        longPressTimer = setTimeout(() => {
+          isDragging = true;
+          touchItem.classList.add("dragging");
+
+          clone = touchItem.cloneNode(true);
+          clone.className = "kanban-item touch-drag-clone";
+          clone.style.width = rect.width + "px";
+          clone.style.left = (touch.clientX - offsetX) + "px";
+          clone.style.top = (touch.clientY - offsetY) + "px";
+          document.body.appendChild(clone);
+        }, LONG_PRESS_MS);
+      }, { passive: true });
+
+      container.addEventListener("touchmove", (e) => {
+        if (!touchItem) return;
+
+        const touch = e.touches[0];
+
+        if (!isDragging) {
+          const dx = Math.abs(touch.clientX - startX);
+          const dy = Math.abs(touch.clientY - startY);
+          if (dx > MOVE_THRESHOLD || dy > MOVE_THRESHOLD) {
+            // User is scrolling, cancel long press
+            clearTimeout(longPressTimer);
+            touchItem = null;
+          }
+          return;
+        }
+
+        e.preventDefault();
+
+        clone.style.left = (touch.clientX - offsetX) + "px";
+        clone.style.top = (touch.clientY - offsetY) + "px";
+
+        // Find drop target via elementFromPoint (clone has pointer-events: none)
+        const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+        if (!targetEl) return;
+
+        const column = targetEl.closest(".kanban-column");
+        if (!column || column.classList.contains("kanban-column-add")) {
+          document.querySelectorAll(".kanban-drop-indicator").forEach(ind => ind.remove());
+          return;
+        }
+
+        document.querySelectorAll(".kanban-drop-indicator").forEach(ind => ind.remove());
+
+        const items = Array.from(column.querySelectorAll(".kanban-item"));
+        const addButton = column.querySelector(".kanban-item-add");
+
+        let insertBefore = null;
+        for (const item of items) {
+          if (item === touchItem) continue;
+          const rect = item.getBoundingClientRect();
+          if (touch.clientY < rect.top + rect.height / 2) {
+            insertBefore = item;
+            break;
+          }
+        }
+
+        const dropIndicator = document.createElement("div");
+        dropIndicator.className = "kanban-drop-indicator";
+        if (insertBefore) {
+          column.insertBefore(dropIndicator, insertBefore);
+        } else if (addButton) {
+          column.insertBefore(dropIndicator, addButton);
+        } else {
+          column.appendChild(dropIndicator);
+        }
+      }, { passive: false });
+
+      container.addEventListener("touchend", (e) => {
+        clearTimeout(longPressTimer);
+
+        if (!isDragging || !touchItem) {
+          cleanup();
+          return;
+        }
+
+        // Find the drop target from the last indicator position
+        const indicator = document.querySelector(".kanban-drop-indicator");
+        if (indicator) {
+          const targetColumn = indicator.closest(".kanban-column");
+          if (targetColumn) {
+            const insertBefore = indicator.nextElementSibling;
+            indicator.remove();
+
+            if (insertBefore && insertBefore !== touchItem) {
+              targetColumn.insertBefore(touchItem, insertBefore);
+            } else if (!insertBefore) {
+              const addButton = targetColumn.querySelector(".kanban-item-add");
+              if (addButton) {
+                targetColumn.insertBefore(touchItem, addButton);
+              } else {
+                targetColumn.appendChild(touchItem);
+              }
+            }
+            saveBoard(container);
+          }
+        }
+
+        cleanup();
+      }, { passive: true });
+
+      container.addEventListener("touchcancel", () => cleanup(), { passive: true });
+    };
+
+    const setupTouchColumnDrag = (container) => {
+      let touchColumn = null;
+      let clone = null;
+      let longPressTimer = null;
+      let isDragging = false;
+      let startX = 0;
+      let startY = 0;
+      let offsetX = 0;
+      let lastTarget = null;
+      let lastPosition = null;
+
+      const cleanup = () => {
+        clearTimeout(longPressTimer);
+        if (clone) {
+          clone.remove();
+          clone = null;
+        }
+        if (touchColumn) {
+          touchColumn.classList.remove("dragging");
+          const titleDiv = touchColumn.querySelector(".kanban-column-title");
+          if (titleDiv) titleDiv.classList.remove("dragging");
+        }
+        container.querySelectorAll(".kanban-column").forEach(col => {
+          col.classList.remove("drop-left", "drop-right");
+        });
+        touchColumn = null;
+        isDragging = false;
+        lastTarget = null;
+        lastPosition = null;
+      };
+
+      container.addEventListener("touchstart", (e) => {
+        const titleDiv = e.target.closest(".kanban-column-title");
+        if (!titleDiv) return;
+        if (titleDiv.closest(".kanban-column-add")) return;
+
+        // Don't drag from buttons or editable text
+        if (e.target.closest(".kanban-column-delete") ||
+            e.target.closest(".kanban-column-title-text")) {
+          return;
+        }
+
+        const column = titleDiv.closest(".kanban-column");
+        if (!column) return;
+
+        const touch = e.touches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+
+        const rect = column.getBoundingClientRect();
+        offsetX = touch.clientX - rect.left;
+
+        touchColumn = column;
+
+        longPressTimer = setTimeout(() => {
+          isDragging = true;
+          touchColumn.classList.add("dragging");
+          titleDiv.classList.add("dragging");
+
+          clone = touchColumn.cloneNode(true);
+          clone.className = "kanban-column touch-drag-clone";
+          clone.style.width = rect.width + "px";
+          clone.style.height = rect.height + "px";
+          clone.style.left = (touch.clientX - offsetX) + "px";
+          clone.style.top = rect.top + "px";
+          document.body.appendChild(clone);
+        }, LONG_PRESS_MS);
+      }, { passive: true });
+
+      container.addEventListener("touchmove", (e) => {
+        if (!touchColumn) return;
+
+        const touch = e.touches[0];
+
+        if (!isDragging) {
+          const dx = Math.abs(touch.clientX - startX);
+          const dy = Math.abs(touch.clientY - startY);
+          if (dx > MOVE_THRESHOLD || dy > MOVE_THRESHOLD) {
+            clearTimeout(longPressTimer);
+            touchColumn = null;
+          }
+          return;
+        }
+
+        e.preventDefault();
+
+        clone.style.left = (touch.clientX - offsetX) + "px";
+
+        const targetEl = document.elementFromPoint(touch.clientX, touch.clientY);
+        if (!targetEl) return;
+
+        const targetColumn = targetEl.closest(".kanban-column");
+        if (!targetColumn || targetColumn.classList.contains("kanban-column-add") || targetColumn === touchColumn) {
+          if (lastTarget) {
+            lastTarget.classList.remove("drop-left", "drop-right");
+            lastTarget = null;
+            lastPosition = null;
+          }
+          return;
+        }
+
+        const rect = targetColumn.getBoundingClientRect();
+        const isDropLeft = touch.clientX < rect.left + rect.width / 2;
+        const dropPosition = isDropLeft ? "left" : "right";
+
+        if (targetColumn === lastTarget && dropPosition === lastPosition) return;
+
+        if (lastTarget) {
+          lastTarget.classList.remove("drop-left", "drop-right");
+        }
+
+        lastTarget = targetColumn;
+        lastPosition = dropPosition;
+        targetColumn.classList.add(isDropLeft ? "drop-left" : "drop-right");
+      }, { passive: false });
+
+      container.addEventListener("touchend", (e) => {
+        clearTimeout(longPressTimer);
+
+        if (!isDragging || !touchColumn) {
+          cleanup();
+          return;
+        }
+
+        if (lastTarget && lastPosition) {
+          if (lastPosition === "left") {
+            lastTarget.parentNode.insertBefore(touchColumn, lastTarget);
+          } else {
+            lastTarget.parentNode.insertBefore(touchColumn, lastTarget.nextSibling);
+          }
+          saveBoard(container);
+        }
+
+        cleanup();
+      }, { passive: true });
+
+      container.addEventListener("touchcancel", () => cleanup(), { passive: true });
+    };
+
+    setupTouchItemDrag(container);
+    setupTouchColumnDrag(container);
+  }
 });

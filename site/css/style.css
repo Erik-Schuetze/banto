@@ -536,3 +536,118 @@ body {
     font-family: monospace;
     font-size: 0.9em;
 }
+
+/* Touch drag clone */
+.touch-drag-clone {
+    position: fixed;
+    z-index: 3000;
+    pointer-events: none;
+    opacity: 0.85;
+    transform: rotate(2deg);
+    box-shadow: 8px 8px 0 rgba(27, 75, 198, 0.3);
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+    .navbar {
+        padding: 0 1rem;
+        height: 3rem;
+        flex: 0 0 3rem;
+    }
+
+    .nav-brand {
+        font-size: 1.2rem;
+    }
+
+    .nav-undo-btn,
+    .nav-redo-btn {
+        width: 1.8rem;
+        height: 1.8rem;
+        font-size: 1rem;
+    }
+
+    .nav-help-btn {
+        font-size: 0;
+        padding: 0;
+        width: 1.8rem;
+        height: 1.8rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .nav-help-btn::after {
+        content: "?";
+        font-size: 0.9rem;
+    }
+
+    .site-main {
+        top: 3rem;
+        bottom: 2rem;
+        overflow-x: auto;
+        overflow-y: auto;
+    }
+
+    .kanban-container {
+        padding: 1rem;
+        gap: 1rem;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        width: auto;
+        min-width: 100%;
+    }
+
+    .kanban-column {
+        min-width: 80vw;
+        flex: 0 0 80vw;
+    }
+
+    .kanban-column.kanban-column-add {
+        min-width: 40vw;
+        flex: 0 0 40vw;
+        max-width: 40vw;
+    }
+
+    .kanban-column-delete {
+        opacity: 1;
+    }
+
+    .kanban-item-complete {
+        opacity: 1;
+    }
+
+    .kanban-item-complete.completed {
+        opacity: 1;
+    }
+
+    .kanban-item-delete {
+        opacity: 1;
+    }
+
+    .kanban-column-title {
+        font-size: 1.1rem;
+    }
+
+    .site-footer {
+        padding: 0 1rem;
+        height: 2rem;
+        flex: 0 0 2rem;
+        font-size: 0.8rem;
+    }
+
+    .help-modal {
+        width: 95%;
+        height: 95%;
+        padding: 1.5rem;
+    }
+
+    .kanban-column.drop-left::before {
+        left: -0.5rem;
+    }
+
+    .kanban-column.drop-right::after {
+        right: -0.5rem;
+    }
+}
+
