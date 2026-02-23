@@ -309,10 +309,19 @@ const setupAddColumn = (container) => {
     addColumnButton.setAttribute("contenteditable", "true");
     addColumnButton.textContent = "";
 
-    // Use setTimeout to ensure contenteditable is ready and cursor shows
-    setTimeout(() => {
-      addColumnButton.focus();
-    }, 0);
+    // Double-rAF ensures the browser has fully applied contenteditable
+    // before we focus and place the cursor
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        addColumnButton.focus();
+        const selection = window.getSelection();
+        const range = document.createRange();
+        range.selectNodeContents(addColumnButton);
+        range.collapse(false);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      });
+    });
   };
 
   addColumnButton.addEventListener("click", (event) => {
