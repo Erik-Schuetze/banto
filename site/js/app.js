@@ -1198,4 +1198,89 @@ document.addEventListener("DOMContentLoaded", () => {
     setupTouchItemDrag(container);
     setupTouchColumnDrag(container);
   }
+
+  // Desktop-only tooltips
+  if (window.matchMedia("(pointer: fine)").matches) {
+    const tooltip = document.createElement("div");
+    tooltip.className = "tooltip";
+    document.body.appendChild(tooltip);
+
+    let tooltipTimer = null;
+    let tooltipTarget = null;
+    const TOOLTIP_DELAY = 300;
+    const TOOLTIP_OFFSET = 12;
+
+    const getTooltipButton = (target) => {
+      const btn = target.closest("button[aria-label]");
+      if (!btn) return null;
+      // Skip buttons with visible text labels
+      if (btn.classList.contains("nav-help-btn")) return null;
+      if (btn.closest(".kanban-column-add")) return null;
+      return btn;
+    };
+
+    const showTooltip = (text, x, y) => {
+      tooltip.textContent = text;
+      tooltip.classList.add("visible");
+      positionTooltip(x, y);
+    };
+
+    const hideTooltip = () => {
+      clearTimeout(tooltipTimer);
+      tooltipTimer = null;
+      tooltipTarget = null;
+      tooltip.classList.remove("visible");
+    };
+
+    const positionTooltip = (x, y) => {
+      const rect = tooltip.getBoundingClientRect();
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+
+      let left = x + TOOLTIP_OFFSET;
+      let top = y + TOOLTIP_OFFSET;
+
+      // Clamp to viewport edges
+      if (left + rect.width > vw - TOOLTIP_OFFSET) {
+        left = x - rect.width - TOOLTIP_OFFSET;
+      }
+      if (top + rect.height > vh - TOOLTIP_OFFSET) {
+        top = y - rect.height - TOOLTIP_OFFSET;
+      }
+
+      tooltip.style.left = left + "px";
+      tooltip.style.top = top + "px";
+    };
+
+    document.addEventListener("mouseover", (e) => {
+      if (draggedItem || draggedColumn) return;
+
+      const btn = getTooltipButton(e.target);
+      if (!btn || btn === tooltipTarget) return;
+
+      hideTooltip();
+      tooltipTarget = btn;
+
+      tooltipTimer = setTimeout(() => {
+        showTooltip(btn.getAttribute("aria-label"), e.clientX, e.clientY);
+      }, TOOLTIP_DELAY);
+    });
+
+    document.addEventListener("mouseout", (e) => {
+      const btn = getTooltipButton(e.target);
+      if (btn && btn === tooltipTarget) {
+        hideTooltip();
+      }
+    });
+
+    document.addEventListener("mousemove", (e) => {
+      if (!tooltipTarget) return;
+      if (tooltip.classList.contains("visible")) {
+        positionTooltip(e.clientX, e.clientY);
+      }
+    });
+
+    // Hide tooltip when drag starts
+    document.addEventListener("dragstart", () => hideTooltip());
+  }
 });
