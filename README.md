@@ -18,6 +18,7 @@ A minimal, responsive kanban board for personal productivity. Perfect for homela
 ### Data & Persistence
 - **Local Storage** — All data saved automatically to browser localStorage
 - **History Management** — Complete undo/redo stack persisted between sessions
+- **Export & Import** — Download board as JSON backup, restore from file across devices or browsers
 - **No Backend Required** — 100% client-side, no server dependencies
 
 ### Design
@@ -45,6 +46,9 @@ Click on any column title, item title, or item notes to edit the text inline. Pr
 
 ### Undo & Redo
 Use the **‹** and **›** buttons in the top-right corner to undo or redo changes. The full action history is preserved across sessions.
+
+### Export & Import
+Use the **↓** button to download your board as a `.json` file. Use the **↑** button to restore a board from a previously exported file. Useful for backups or moving your board between devices or browsers.
 
 ## Deployment
 

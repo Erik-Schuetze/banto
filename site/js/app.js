@@ -567,6 +567,58 @@ document.addEventListener("DOMContentLoaded", () => {
     boardHistory.updateUndoRedoButtons();
   }
 
+  // Export/Import functionality
+  const exportBtn = document.querySelector(".nav-export-btn");
+  const importBtn = document.querySelector(".nav-import-btn");
+  const importFileInput = document.getElementById("importFileInput");
+
+  if (exportBtn) {
+    exportBtn.addEventListener("click", () => {
+      const boardState = localStorage.getItem(STORAGE_BOARD_KEY);
+      if (!boardState) return;
+
+      const blob = new Blob([boardState], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "banto-board-" + new Date().toISOString().slice(0, 10) + ".json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+  }
+
+  if (importBtn && importFileInput) {
+    importBtn.addEventListener("click", () => {
+      importFileInput.click();
+    });
+
+    importFileInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const data = JSON.parse(event.target.result);
+          if (!Array.isArray(data)) throw new Error("Invalid format");
+
+          const boardStateJson = JSON.stringify(data);
+          restoreBoardState(container, boardStateJson);
+          boardHistory.saveState(boardStateJson);
+          container.querySelectorAll(".kanban-column-title:not(.kanban-column-add .kanban-column-title)").forEach(titleDiv => {
+            setupColumnTitleDrag(titleDiv);
+          });
+        } catch (err) {
+          alert("Failed to import: invalid board file.");
+        }
+      };
+      reader.readAsText(file);
+      importFileInput.value = "";
+    });
+  }
+
   // Help modal functionality
   const helpBtn = document.querySelector(".nav-help-btn");
   const helpOverlay = document.getElementById("helpOverlay");

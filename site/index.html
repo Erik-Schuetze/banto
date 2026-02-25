@@ -19,9 +19,14 @@
       <div class="nav-actions">
         <button class="nav-undo-btn" type="button" aria-label="Undo">‹</button>
         <button class="nav-redo-btn" type="button" aria-label="Redo">›</button>
+        <div class="nav-spacer"></div>
+        <button class="nav-export-btn" type="button" aria-label="Export board">↓</button>
+        <button class="nav-import-btn" type="button" aria-label="Import board">↑</button>
+        <div class="nav-spacer"></div>
         <button class="nav-help-btn" type="button" aria-label="Help">Help</button>
       </div>
     </nav>
+    <input type="file" id="importFileInput" accept=".json" style="display: none;">
 
     <main class="site-main">
       <div class="kanban-container">
@@ -115,6 +120,11 @@
           <section>
             <h3>Undo &amp; Redo</h3>
             <p>Use the <strong>‹</strong> and <strong>›</strong> buttons in the top-right corner to undo or redo changes. The full action history is preserved across sessions.</p>
+          </section>
+
+          <section>
+            <h3>Export &amp; Import</h3>
+            <p>Use the <strong>↓</strong> button to download your board as a <code>.json</code> file. Use the <strong>↑</strong> button to restore a board from a previously exported file. Useful for backups or moving your board between devices or browsers.</p>
           </section>
 
           <section>
