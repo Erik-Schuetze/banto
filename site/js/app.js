@@ -540,30 +540,29 @@ document.addEventListener("DOMContentLoaded", () => {
   const undoBtn = document.querySelector(".nav-undo-btn");
   const redoBtn = document.querySelector(".nav-redo-btn");
 
+  const performUndo = () => {
+    const previousState = boardHistory.undo();
+    if (previousState) {
+      restoreBoardState(container, previousState);
+      container.querySelectorAll(".kanban-column-title:not(.kanban-column-add .kanban-column-title)").forEach(titleDiv => {
+        setupColumnTitleDrag(titleDiv);
+      });
+    }
+  };
+
+  const performRedo = () => {
+    const nextState = boardHistory.redo();
+    if (nextState) {
+      restoreBoardState(container, nextState);
+      container.querySelectorAll(".kanban-column-title:not(.kanban-column-add .kanban-column-title)").forEach(titleDiv => {
+        setupColumnTitleDrag(titleDiv);
+      });
+    }
+  };
+
   if (undoBtn && redoBtn) {
-    undoBtn.addEventListener("click", () => {
-      const previousState = boardHistory.undo();
-      if (previousState) {
-        restoreBoardState(container, previousState);
-        // Setup drag handlers on restored columns
-        container.querySelectorAll(".kanban-column-title:not(.kanban-column-add .kanban-column-title)").forEach(titleDiv => {
-          setupColumnTitleDrag(titleDiv);
-        });
-      }
-    });
-
-    redoBtn.addEventListener("click", () => {
-      const nextState = boardHistory.redo();
-      if (nextState) {
-        restoreBoardState(container, nextState);
-        // Setup drag handlers on restored columns
-        container.querySelectorAll(".kanban-column-title:not(.kanban-column-add .kanban-column-title)").forEach(titleDiv => {
-          setupColumnTitleDrag(titleDiv);
-        });
-      }
-    });
-
-    // Update button states on load
+    undoBtn.addEventListener("click", performUndo);
+    redoBtn.addEventListener("click", performRedo);
     boardHistory.updateUndoRedoButtons();
   }
 
@@ -572,27 +571,31 @@ document.addEventListener("DOMContentLoaded", () => {
   const importBtn = document.querySelector(".nav-import-btn");
   const importFileInput = document.getElementById("importFileInput");
 
-  if (exportBtn) {
-    exportBtn.addEventListener("click", () => {
-      const boardState = localStorage.getItem(STORAGE_BOARD_KEY);
-      if (!boardState) return;
+  const exportBoard = () => {
+    const boardState = localStorage.getItem(STORAGE_BOARD_KEY);
+    if (!boardState) return;
 
-      const blob = new Blob([boardState], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "banto-board-" + new Date().toISOString().slice(0, 10) + ".json";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    });
+    const blob = new Blob([boardState], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "banto-board-" + new Date().toISOString().slice(0, 10) + ".json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const triggerImport = () => {
+    if (importFileInput) importFileInput.click();
+  };
+
+  if (exportBtn) {
+    exportBtn.addEventListener("click", exportBoard);
   }
 
   if (importBtn && importFileInput) {
-    importBtn.addEventListener("click", () => {
-      importFileInput.click();
-    });
+    importBtn.addEventListener("click", triggerImport);
 
     importFileInput.addEventListener("change", (e) => {
       const file = e.target.files[0];
@@ -618,6 +621,34 @@ document.addEventListener("DOMContentLoaded", () => {
       importFileInput.value = "";
     });
   }
+
+  // Keyboard shortcuts (desktop)
+  document.addEventListener("keydown", (event) => {
+    // Skip if a contenteditable element is focused
+    if (document.activeElement && document.activeElement.isContentEditable) return;
+
+    const isMod = event.metaKey || event.ctrlKey;
+    if (!isMod) return;
+
+    switch (event.key) {
+      case "z":
+        event.preventDefault();
+        if (event.shiftKey) {
+          performRedo();
+        } else {
+          performUndo();
+        }
+        break;
+      case "s":
+        event.preventDefault();
+        exportBoard();
+        break;
+      case "i":
+        event.preventDefault();
+        triggerImport();
+        break;
+    }
+  });
 
   // Help modal functionality
   const helpBtn = document.querySelector(".nav-help-btn");
