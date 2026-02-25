@@ -4,6 +4,8 @@ const STORAGE_HISTORY_KEY = "banto:history";
 const ADD_COLUMN_LABEL = "add column";
 
 // History management
+const MAX_HISTORY = 30;
+
 class BoardHistory {
   constructor() {
     this.history = [];
@@ -17,6 +19,12 @@ class BoardHistory {
     // Add new state
     this.history.push(boardState);
     this.currentIndex++;
+    // Trim oldest states if cap is exceeded
+    if (this.history.length > MAX_HISTORY) {
+      const excess = this.history.length - MAX_HISTORY;
+      this.history = this.history.slice(excess);
+      this.currentIndex = Math.max(0, this.currentIndex - excess);
+    }
     this.persistHistory();
     this.updateUndoRedoButtons();
   }
