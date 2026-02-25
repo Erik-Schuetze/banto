@@ -14,6 +14,7 @@ A minimal, responsive kanban board for personal productivity. Perfect for homela
 - **Inline Editing** — Click any text to edit; press `Enter` to save, `Shift+Enter` for new line
 - **Undo & Redo** — Full action history with `‹` / `›` buttons, preserved across sessions
 - **Completion Tracking** — Toggle checkmark (✔) to mark items complete with strikethrough styling
+- **Keyboard Shortcuts** — `⌘Z` undo, `⌘⇧Z` redo, `⌘S` export, `⌘I` import (`Ctrl` on Windows/Linux)
 
 ### Data & Persistence
 - **Local Storage** — All data saved automatically to browser localStorage
@@ -49,6 +50,16 @@ Use the **‹** and **›** buttons in the top-right corner to undo or redo chan
 
 ### Export & Import
 Use the **↓** button to download your board as a `.json` file. Use the **↑** button to restore a board from a previously exported file. Useful for backups or moving your board between devices or browsers.
+
+### Keyboard Shortcuts
+| Shortcut | Action |
+|---|---|
+| `⌘ Z` | Undo |
+| `⌘ Shift Z` | Redo |
+| `⌘ S` | Export board |
+| `⌘ I` | Import board |
+
+Use `Ctrl` instead of `⌘` on Windows and Linux. Shortcuts are disabled while editing text.
 
 ## Deployment
 

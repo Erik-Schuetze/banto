@@ -570,6 +570,28 @@ body {
     font-size: 0.9em;
 }
 
+/* Tooltip */
+.tooltip {
+    position: fixed;
+    z-index: 3000;
+    pointer-events: none;
+    background-color: var(--bg-light);
+    border: 2px solid var(--accent-color);
+    box-shadow: 4px 4px 0 var(--accent-color);
+    padding: 0.3rem 0.6rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-color);
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.tooltip.visible {
+    opacity: 1;
+}
+
 /* Touch drag clone */
 .touch-drag-clone {
     position: fixed;
@@ -640,6 +662,8 @@ body {
         -webkit-overflow-scrolling: touch;
         width: auto;
         min-width: 100%;
+        min-height: 100%;
+        align-items: stretch;
     }
 
     .kanban-column {
