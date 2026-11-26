@@ -361,6 +361,17 @@ body {
     cursor: text;
 }
 
+.kanban-item-notes a {
+    color: var(--accent-color);
+    text-decoration: underline;
+    cursor: pointer;
+    word-break: break-word;
+}
+
+.kanban-item-notes a:hover {
+    text-decoration: none;
+}
+
 .kanban-drop-indicator {
     height: 2px;
     background-color: rgba(36, 42, 43, 0.3);

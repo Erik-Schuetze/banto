@@ -143,6 +143,70 @@ const persistValue = (element) => {
   localStorage.setItem(key, normalized);
 };
 
+// Turn URLs inside a note into clickable links while it is not being edited.
+// The note stays plain text for storage (innerText) and reverts to plain text
+// on focus so typing is never disrupted by anchor elements.
+const replaceUrlsInTextNode = (node) => {
+  const text = node.nodeValue;
+  const matches = [...text.matchAll(/https?:\/\/[^\s]+/g)];
+  if (matches.length === 0) {
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+  let lastIndex = 0;
+
+  matches.forEach((match) => {
+    let url = match[0];
+    // Keep trailing punctuation out of the link, e.g. "see https://x.dev."
+    const trailing = url.match(/[.,;:!?)\]}'"]+$/);
+    if (trailing) {
+      url = url.slice(0, url.length - trailing[0].length);
+    }
+    const start = match.index;
+
+    if (start > lastIndex) {
+      fragment.appendChild(document.createTextNode(text.slice(lastIndex, start)));
+    }
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.textContent = url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.contentEditable = "false";
+    // Open the link without moving the caret into the editable note.
+    link.addEventListener("mousedown", (event) => event.preventDefault());
+    fragment.appendChild(link);
+
+    lastIndex = start + url.length;
+  });
+
+  if (lastIndex < text.length) {
+    fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+  }
+
+  node.replaceWith(fragment);
+};
+
+const linkify = (element) => {
+  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+  const textNodes = [];
+  let node;
+  while ((node = walker.nextNode())) {
+    if (node.parentElement && !node.parentElement.closest("a")) {
+      textNodes.push(node);
+    }
+  }
+  textNodes.forEach(replaceUrlsInTextNode);
+};
+
+const delinkify = (element) => {
+  element.querySelectorAll("a").forEach((link) => {
+    link.replaceWith(document.createTextNode(link.textContent));
+  });
+};
+
 const ensureEditable = (element) => {
   if (element.dataset.bound === "true") {
     return;
@@ -151,6 +215,12 @@ const ensureEditable = (element) => {
   element.dataset.bound = "true";
   element.setAttribute("contenteditable", "true");
   applyStoredValue(element);
+
+  const isNotes = element.classList.contains("kanban-item-notes");
+  if (isNotes) {
+    linkify(element);
+    element.addEventListener("focus", () => delinkify(element));
+  }
 
   element.addEventListener("keydown", (event) => {
     if (event.key !== "Enter") {
@@ -173,6 +243,9 @@ const ensureEditable = (element) => {
 
   element.addEventListener("blur", () => {
     persistValue(element);
+    if (isNotes) {
+      linkify(element);
+    }
     const container = document.querySelector(".kanban-container");
     if (container) {
       saveBoard(container);
